@@ -1,3 +1,4 @@
+import hashlib
 class Usuario:
     def __init__(self, conn):
         self.conn = conn
@@ -18,16 +19,17 @@ class Usuario:
         """
 
     def crear_usuarios(self, id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, menus):
+
+        contraseha = hashlib.new("sha1", passwrd.encode('utf-8'))
         try:
             if self.existe_usuario(id_usuario):
                 return {"message": "El usuario ya está registrado", "status": "0"}
             with self.conn.cursor() as cursor:
                 consulta = "INSERT INTO usuario (id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, activo) VALUES(%s,%s,%s,%s,%s,%s,true)"
-                cursor.execute(
-                    consulta, (id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd))
+                cursor.execute(consulta, (id_usuario, id_tipo_doc, nombre, apellido, correo, contraseha.digest()))
                 self.conn.commit()
                 cursor.close()
-                self.insert_menu(id_usuario,menus)
+                self.insert_menu(id_usuario, menus, "true")
                 return {"message": "Registro Realizado", "status": "1"}
         except Exception as e:
             return {"message": "Error"+str(e), "status": "2"}
@@ -58,7 +60,7 @@ class Usuario:
                 self.conn.commit()
                 cursor.close()
                 self.delete_menu(id_usuario)
-                self.insert_menu(id_usuario, menus)
+                self.insert_menu(id_usuario, menus, activo)
                 return {"message": "Registro Realizado", "status": "1"}
         except Exception as e:
             return {"message": "Error"+str(e), "status": "2"}
@@ -117,16 +119,45 @@ class Usuario:
         Returns:
             boolean -- true o false de acuerdo si se insertaron o no los permisos
     """
-    def insert_menu(self, id_usuario, menus):
+    def insert_menu(self, id_usuario, menus, activo):
 
         try:
             with self.conn.cursor() as cursor:
                 for menu in menus:
-                    consulta = "INSERT INTO usuario_menu (id_usuario, id_menu, activo) VALUES(%s,%s,true)"
-                    cursor.execute(consulta, (id_usuario, menu["id_menu"]))
+                    consulta = "INSERT INTO usuario_menu (activo, id_usuario, id_menu) VALUES(%s,%s,%s)"
+                    esta = self.existe_menu(id_usuario, menu["id_menu"]) 
+                    if esta == True:
+                        consulta = "UPDATE usuario_menu SET activo = %s WHERE id_usuario = %s AND id_menu = %s"
+                    print(esta)
+                    cursor.execute(consulta, (activo, id_usuario, menu["id_menu"]))
                     self.conn.commit()
                 cursor.close()
                 return True
+        except Exception as e:
+            print(str(e))
+            return False
+
+    """Este metodo se encarga de comprobar si existe o no un permiso para el usuario
+        
+        Arguments:
+            id_cliente {Integer} -- el numero de documento del cliente o entidad
+            telefono {array[menu]} -- el id del permiso
+        Returns:
+            boolean -- true o false de acuerdo si esta o no
+    """
+    def existe_menu(self, id_usuario, id_menu):
+
+        try:
+            with self.conn.cursor() as cursor:
+                consulta = "SELECT COUNT(*) as cantidad FROM usuario_menu WHERE id_usuario = %s AND id_menu = %s"
+                cursor.execute(consulta, (id_usuario,id_menu))
+                rows = cursor.fetchall()
+                esta = False
+                for row in rows:
+                    if row[0] > 0:
+                        esta = True
+                cursor.close()
+                return esta
         except Exception as e:
             print(str(e))
             return False
