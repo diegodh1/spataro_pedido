@@ -3,6 +3,7 @@ from flask_cors import CORS
 import conection
 import modulos.Cliente as cliente
 import modulos.Usuario as usuario
+import modulos.Referencia as referencia
 
 app=Flask(__name__)
 CORS(app)
@@ -101,6 +102,14 @@ def editar_usuario():
     menus = content['menus']
     nuevo_usuario = usuario.Usuario(conection.conn)
     return nuevo_usuario.editar_usuario(id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, activo, id_usuario_aux, menus)
+
+@app.route('/guardar_referencia',methods=['POST'])
+def guardar_referencia():
+    content=request.get_json()
+    base64_excel=content['base64_excel']
+    tipo=content['tipo']
+    ref = referencia.Referencia(conection.conn)
+    return ref.guardar_referencia(base64_excel,tipo)
 
 #inicializamos el servidor el cual escucha en el puerto 4000 y se reinicia cada vez q hayan cambios
 if __name__=='__main__':
