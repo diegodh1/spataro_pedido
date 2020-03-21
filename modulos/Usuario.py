@@ -18,7 +18,7 @@ class Usuario:
             JSON -- retorna un JSON indicando el resultado de la operacion
         """
 
-    def crear_usuarios(self, id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, menus):
+    def crear_usuario(self, id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, menus):
 
         contraseha = hashlib.new("sha1", passwrd.encode('utf-8'))
         try:
@@ -26,13 +26,13 @@ class Usuario:
                 return {"message": "El usuario ya está registrado", "status": "0"}
             with self.conn.cursor() as cursor:
                 consulta = "INSERT INTO usuario (id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, activo) VALUES(%s,%s,%s,%s,%s,%s,true)"
-                cursor.execute(consulta, (id_usuario, id_tipo_doc, nombre, apellido, correo, contraseha.digest()))
+                cursor.execute(consulta, (id_usuario, id_tipo_doc, nombre, apellido, correo, str(contraseha.digest())))
                 self.conn.commit()
                 cursor.close()
                 self.insert_menu(id_usuario, menus, "true")
-                return {"message": "Registro Realizado", "status": "1"}
+                return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
-            return {"message": "Error"+str(e), "status": "2"}
+            return {"message": "Error "+str(e), "status": 500}
     
 
     """Este metodo se encarga de editar un usuario en la BD
@@ -53,17 +53,18 @@ class Usuario:
         """
 
     def editar_usuario(self, id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, activo, id_usuario_aux, menus):
+        contraseha = hashlib.new("sha1", passwrd.encode('utf-8'))
         try:
             with self.conn.cursor() as cursor:
                 consulta = "UPDATE usuario  SET id_usuario = %s, id_tipo_doc = %s, nombre = %s , apellido = %s, correo = %s, passwrd = %s, activo = %s WHERE id_usuario = %s"
-                cursor.execute(consulta, (id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, activo, id_usuario_aux))
+                cursor.execute(consulta, (id_usuario, id_tipo_doc, nombre, apellido, correo, str(contraseha.digest()), activo, id_usuario_aux))
                 self.conn.commit()
                 cursor.close()
                 self.delete_menu(id_usuario)
                 self.insert_menu(id_usuario, menus, activo)
-                return {"message": "Registro Realizado", "status": "1"}
+                return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
-            return {"message": "Error"+str(e), "status": "2"}
+            return {"message": "Error "+str(e), "status": 500}
     
 
     """Este metodo se encarga de verificar que un usuario exista en la base de datos
@@ -161,3 +162,75 @@ class Usuario:
         except Exception as e:
             print(str(e))
             return False
+    
+    """metodo que se encarga de iniciar sesion de usuario
+        
+        Arguments:
+            id_usuario {bigint} el id del usuario
+            passwrd {char(100)} la password del usuario
+        
+        Returns:
+            retorna un json el cual es la informacion de usuario que ingreso
+    """  
+    def iniciar_sesion(self, id_usuario,passwrd):
+        menus = self.menu_usuario(id_usuario)
+        usuario = {"id_usuario": "", "id_tipo_doc": "", "nombre": "", "apellido": "", "correo": "", "activo": 0, "menus":menus}
+        
+        try:
+            contraseha = hashlib.new("sha1", passwrd.encode('utf-8'))
+            with self.conn.cursor() as cursor:
+                consulta = "SELECT * FROM usuario WHERE id_usuario = %s AND passwrd = %s AND activo = true"
+                cursor.execute(consulta, (id_usuario,str(contraseha.digest())))
+                rows = cursor.fetchall()
+                for row in rows:
+                    usuario = {"id_usuario": row[0], "id_tipo_doc": row[1], "nombre": row[2], "apellido": row[3], "correo": row[4], "activo": row[6], "menus": menus}
+                cursor.close()
+                return {"status": 200, "usuario": usuario}
+        except Exception as e:
+            print(str(e))
+            return  {"status": 500, "usuario": usuario}
+
+    """metodo que me da los permisos o menus relacionados a un usuario
+        
+        Arguments:
+            id_usuario {bigint} -- el id del usuario
+        
+        Returns:
+            una lista de strings que indican el menu correspondiente al usuario
+     """
+    def menu_usuario(self, id_usuario):  
+        menus = []
+        try:
+            with self.conn.cursor() as cursor:
+                consulta = "SELECT id_menu FROM usuario_menu WHERE id_usuario = %s  AND activo = true"
+                cursor.execute(consulta, (id_usuario,))
+                rows = cursor.fetchall()
+                for row in rows:
+                    menus.append(row[0])
+                cursor.close()
+                return menus
+        except Exception as e:
+            print(str(e))
+            return  menus
+
+    """este metodo te permite cambiar la password de un usuario
+        
+        Arguments:
+            id_usuario {bigint} el id del usuario
+            passwrd {char(100)} la password del usuario
+        
+        Returns:
+            retorna un json el cual contiene un mensaje indicando el resultado de la operacion
+        """    
+    def reset_password(self, id_usuario, passwrd):
+            
+        try:
+            contraseha = hashlib.new("sha1", passwrd.encode('utf-8'))
+            with self.conn.cursor() as cursor:
+                consulta = "UPDATE usuario SET passwrd = %s WHERE id_usuario = %s AND activo = true"
+                cursor.execute(consulta, (str(contraseha.digest()), id_usuario))
+                self.conn.commit()
+                cursor.close()
+                return  {"status": 200, "mensaje": "Cambio Realizado"}
+        except Exception as e:
+            return {"status": 500, "mensaje": "No se pudo cambiar el password: "+str(e)}

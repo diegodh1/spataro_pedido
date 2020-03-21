@@ -29,9 +29,9 @@ class Cliente:
                 cursor.close()
                 self.insert_direccion(id_cliente, direcciones)
                 self.insert_telefono(id_cliente, telefonos)
-                return {"message": "Registro Realizado", "status": "1"}
+                return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
-            return {"message": "Error"+str(e), "status": "2"}
+            return {"message": "Error "+str(e), "status": 500}
     
 
     """Este metodo se encarga de editar un cliente en la BD
@@ -62,9 +62,9 @@ class Cliente:
                 self.delete_direccion(id_cliente)
                 self.insert_direccion(id_cliente, direcciones)
                 self.insert_telefono(id_cliente, telefonos)
-                return {"message": "Registro Realizado", "status": "1"}
+                return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
-            return {"message": "Error"+str(e), "status": "2"}
+            return {"message": "Error "+str(e), "status": 500}
     
 
     """Este metodo se encarga de verificar que un cliente exista en la base de datos
