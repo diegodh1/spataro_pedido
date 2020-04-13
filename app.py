@@ -5,6 +5,7 @@ import modulos.Cliente as cliente
 import modulos.Usuario as usuario
 import modulos.Referencia as referencia
 import modulos.Pedido as pedido
+from werkzeug.utils import secure_filename
 
 app=Flask(__name__)
 CORS(app)
@@ -27,6 +28,18 @@ def crear_cliente():
     telefonos = content['telefonos']
     nuevo_cliente = cliente.Cliente(conection.conn)
     return nuevo_cliente.crear_clientes(id_cliente, id_tipo_doc, nombre, apellido, correo, direcciones, telefonos)
+
+"""funcion encargada de recibir una peticion post en la ruta /search_cliente
+
+Returns:
+    un Json indicando el resultado de la operacion
+"""
+@app.route('/search_cliente',methods=['POST'])
+def search_cliente():
+    content=request.get_json()
+    id_cliente=content['id_cliente']
+    nuevo_cliente = cliente.Cliente(conection.conn)
+    return nuevo_cliente.search_cliente(id_cliente)
 
 """funcion encargada de recibir una peticion post en la ruta /editar_cliente
 
@@ -61,18 +74,39 @@ def buscar_cliente():
     nuevo_cliente = cliente.Cliente(conection.conn)
     return jsonify(nuevo_cliente.buscar_cliente(nombre, apellido))
 
-"""funcion encargada de recibir una peticion post en la ruta /buscar_cliente_edit
+"""funcion encargada de recibir una peticion post en la ruta /get_documentos
 
 Returns:
     un Json indicando el resultado de la operacion
 """
-@app.route('/buscar_cliente_edit',methods=['POST'])
-def buscar_cliente_edit():
-    content=request.get_json()
-    nombre=content['nombre']
-    apellido=content['apellido']
+@app.route('/get_documentos',methods=['POST'])
+def get_documentos():
     nuevo_cliente = cliente.Cliente(conection.conn)
-    return jsonify(nuevo_cliente.buscar_cliente_edit(nombre, apellido))
+    return jsonify(nuevo_cliente.get_documentos())
+
+"""funcion encargada de recibir una peticion post en la ruta /get_paises
+
+Returns:
+    un Json indicando el resultado de la operacion
+"""
+@app.route('/get_paises',methods=['POST'])
+def get_paises():
+    content=request.get_json()
+    id_pais=content['id_pais']
+    nuevo_cliente = cliente.Cliente(conection.conn)
+    return jsonify(nuevo_cliente.get_paises(id_pais))
+
+"""funcion encargada de recibir una peticion post en la ruta /get_ciudades
+
+Returns:
+    un Json indicando el resultado de la operacion
+"""
+@app.route('/get_ciudades',methods=['POST'])
+def get_ciudades():
+    content=request.get_json()
+    id_ciudad=content['id_ciudad']
+    nuevo_cliente = cliente.Cliente(conection.conn)
+    return jsonify(nuevo_cliente.get_ciudades(id_ciudad))
 
 #funciones relacionadas con el usuario
 
@@ -90,9 +124,10 @@ def crear_usuario():
     apellido=content['apellido']
     correo=content['correo']
     passwrd = content['passwrd']
+    foto = content['foto']
     menus = content['menus']
     nuevo_usuario = usuario.Usuario(conection.conn)
-    return nuevo_usuario.crear_usuario(id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, menus)
+    return nuevo_usuario.crear_usuario(id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd,foto, menus)
 
 """funcion encargada de recibir una peticion post en la ruta /editar_usuario
 
@@ -109,10 +144,33 @@ def editar_usuario():
     apellido=content['apellido']
     correo=content['correo']
     activo=content['activo']
-    passwrd = content['passwrd']
+    foto = content['foto']
     menus = content['menus']
     nuevo_usuario = usuario.Usuario(conection.conn)
-    return nuevo_usuario.editar_usuario(id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, activo, id_usuario_aux, menus)
+    return nuevo_usuario.editar_usuario(id_usuario, id_tipo_doc, nombre, apellido, correo, activo, id_usuario_aux, foto, menus)
+
+"""funcion encargada de recibir una peticion post en la ruta /search_usuario
+
+Returns:
+    un Json indicando el resultado de la operacion
+"""
+@app.route('/search_usuario',methods=['POST'])
+def search_usuario():
+    content=request.get_json()
+    id_usuario=content['id_usuario']
+    nuevo_usuario = usuario.Usuario(conection.conn)
+    return nuevo_usuario.search_usuario(id_usuario)
+
+"""funcion encargada de recibir una peticion post en la ruta /get_menus
+
+Returns:
+    un Json indicando el resultado de la operacion
+"""
+@app.route('/get_menus',methods=['POST'])
+def get_menus():
+    nuevo_usuario = usuario.Usuario(conection.conn)
+    return jsonify(nuevo_usuario.get_menus())
+
 
 """funcion encargada de recibir una peticion post en la ruta /iniciar_sesion
 
@@ -149,10 +207,10 @@ Returns:
 @app.route('/guardar_referencia',methods=['POST'])
 def guardar_referencia():
     content=request.get_json()
-    base64_excel=content['base64_excel']
-    tipo=content['tipo']
+    f = content['file']
+    tipo = content['tipo']
     ref = referencia.Referencia(conection.conn)
-    return ref.guardar_referencia(base64_excel,tipo)
+    return ref.guardar_referencia(f,tipo)
 
 
 """funcion encargada de recibir una peticion post en la ruta /buscar_referencia
@@ -192,8 +250,21 @@ def crear_pedido():
     fecha=content['fecha']
     firma=content['firma']
     observacion=content['observacion']
+    direccion = content['direccion']
     ped = pedido.Pedido(conection.conn)
-    return ped.crear_pedido(id_cliente,id_usuario,fecha,firma,observacion)
+    return ped.crear_pedido(id_cliente,id_usuario,fecha,firma,observacion, direccion)
+
+"""funcion encargada de recibir una peticion post en la ruta /search_pedido
+
+Returns:
+    un Json indicando el resultado de la operacion
+"""
+@app.route('/search_pedido',methods=['POST'])
+def search_pedido():
+    content=request.get_json()
+    id_pedido=content['id_pedido']
+    ped = pedido.Pedido(conection.conn)
+    return ped.search_pedido(id_pedido)
 
 """funcion encargada de recibir una peticion post en la ruta /editar_pedido
 
@@ -209,8 +280,45 @@ def editar_pedido():
     firma=content['firma']
     observacion=content['observacion']
     activo=content['activo']
+    direccion = content['direccion']
     ped = pedido.Pedido(conection.conn)
-    return ped.editar_pedido(id_pedido,id_cliente,fecha,firma,observacion,activo)
+    return ped.editar_pedido(id_pedido,id_cliente,fecha,firma,observacion,activo,direccion)
+
+"""funcion encargada de recibir una peticion post en la ruta /search_ref
+
+Returns:
+    un Json indicando el resultado de la operacion
+"""
+@app.route('/search_ref',methods=['POST'])
+def search_ref():
+    content=request.get_json()
+    id_referencia=content['id_referencia']
+    ped = pedido.Pedido(conection.conn)
+    return ped.buscar_referencia(id_referencia)
+
+"""funcion encargada de recibir una peticion post en la ruta /search_ref_color
+
+Returns:
+    un Json indicando el resultado de la operacion
+"""
+@app.route('/search_ref_color',methods=['POST'])
+def search_ref_color():
+    content=request.get_json()
+    id_referencia=content['id_referencia']
+    ped = pedido.Pedido(conection.conn)
+    return ped.buscar_referencia_color(id_referencia)
+
+"""funcion encargada de recibir una peticion post en la ruta /search_ref_color_talla
+
+Returns:
+    un Json indicando el resultado de la operacion
+"""
+@app.route('/search_ref_color_talla',methods=['POST'])
+def search_ref_color_talla():
+    content=request.get_json()
+    id_ref_color=content['id_ref_color']
+    ped = pedido.Pedido(conection.conn)
+    return ped.buscar_referencia_color_talla(id_ref_color)
 
 """funcion encargada de recibir una peticion post en la ruta /agregar_item_pedido
 
@@ -236,9 +344,9 @@ Returns:
 def eliminar_ref_unidades():
     content=request.get_json()
     id_pedido=content['id_pedido']
-    id_consecutivo=content['id_consecutivo']
+    consecutivo=content['consecutivo']
     ped = pedido.Pedido(conection.conn)
-    return ped.eliminar_ref_unidades(id_pedido,id_consecutivo)
+    return ped.eliminar_ref_unidades(id_pedido,consecutivo)
 
 """funcion encargada de recibir una peticion post en la ruta /dar_items_guardados
 

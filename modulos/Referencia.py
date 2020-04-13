@@ -15,12 +15,12 @@ class Referencia:
     Returns:
         retorna una operacion auxiliar el cual dependiendo del tipo dara un json
     """
-    def guardar_referencia(self, base64_excel, tipo):
-        
+    def guardar_referencia(self, excel, tipo):
+        excel = base64.b64decode(excel)
         if tipo == "UND":
-            return self.guardar_referencia_u(base64_excel)
+            return self.guardar_referencia_u(excel)
         else:
-            return self.guardar_referencia_m(base64_excel)
+            return self.guardar_referencia_m(excel)
 
     """este metodo se encarga de guardar las referencias en metros
         
@@ -30,10 +30,8 @@ class Referencia:
     Returns:
         retorna un json el cual es el resultado de la operacion
     """ 
-    def guardar_referencia_m(self, base64_excel):
-       
-        e = base64.b64decode(base64_excel)
-        df = pd.read_excel(e)
+    def guardar_referencia_m(self, f):
+        df = pd.read_excel(f)
         size = df.shape
         rows = size[0]
         try:
@@ -68,9 +66,8 @@ class Referencia:
     Returns:
         retorna un json el cual es el resultado de la operacion
     """ 
-    def guardar_referencia_u(self, base64_excel):
-        e = base64.b64decode(base64_excel)
-        df = pd.read_excel(e)
+    def guardar_referencia_u(self, f):
+        df = pd.read_excel(f)
         size = df.shape
         rows = size[0]
         try:
@@ -474,7 +471,7 @@ class Referencia:
         try:
             with self.conn.cursor() as cursor:
                 consulta = """SELECT RC.* FROM referencia as R INNER JOIN ref_color AS RC ON RC.id_referencia = R.id_referencia AND RC.activo = 'A' 
-                WHERE R.id_referencia like UPPER(%s) and R.activo = 'A'"""
+                WHERE R.id_referencia like UPPER(%s) and R.activo = 'A' LIMIT 7"""
                 ref_pattern = '%{}%'.format(id_referencia)
                 cursor.execute(consulta, (ref_pattern,))
                 rows = cursor.fetchall()

@@ -18,20 +18,21 @@ class Usuario:
             JSON -- retorna un JSON indicando el resultado de la operacion
         """
 
-    def crear_usuario(self, id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, menus):
+    def crear_usuario(self, id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd,foto, menus):
 
         contraseha = hashlib.new("sha1", passwrd.encode('utf-8'))
         try:
             if self.existe_usuario(id_usuario):
                 return {"message": "El usuario ya está registrado", "status": "0"}
             with self.conn.cursor() as cursor:
-                consulta = "INSERT INTO usuario (id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, activo) VALUES(%s,%s,%s,%s,%s,%s,true)"
-                cursor.execute(consulta, (id_usuario, id_tipo_doc, nombre, apellido, correo, str(contraseha.digest())))
+                consulta = "INSERT INTO usuario (id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, activo, foto) VALUES(%s,%s,%s,%s,%s,%s,true,%s)"
+                cursor.execute(consulta, (id_usuario, id_tipo_doc, nombre, apellido, correo, str(contraseha.digest()),foto))
                 self.conn.commit()
                 cursor.close()
                 self.insert_menu(id_usuario, menus, "true")
                 return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
+            self.anular_transaccion()
             return {"message": "Error "+str(e), "status": 500}
     
 
@@ -52,12 +53,11 @@ class Usuario:
             JSON -- retorna un JSON indicando el resultado de la operacion
         """
 
-    def editar_usuario(self, id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, activo, id_usuario_aux, menus):
-        contraseha = hashlib.new("sha1", passwrd.encode('utf-8'))
+    def editar_usuario(self, id_usuario, id_tipo_doc, nombre, apellido, correo, activo, id_usuario_aux,foto, menus):
         try:
             with self.conn.cursor() as cursor:
-                consulta = "UPDATE usuario  SET id_usuario = %s, id_tipo_doc = %s, nombre = %s , apellido = %s, correo = %s, passwrd = %s, activo = %s WHERE id_usuario = %s"
-                cursor.execute(consulta, (id_usuario, id_tipo_doc, nombre, apellido, correo, str(contraseha.digest()), activo, id_usuario_aux))
+                consulta = "UPDATE usuario  SET id_usuario = %s, id_tipo_doc = %s, nombre = %s , apellido = %s, correo = %s, activo = %s, foto=%s WHERE id_usuario = %s"
+                cursor.execute(consulta, (id_usuario, id_tipo_doc, nombre, apellido, correo, activo, foto, id_usuario_aux))
                 self.conn.commit()
                 cursor.close()
                 self.delete_menu(id_usuario)
@@ -88,6 +88,50 @@ class Usuario:
                         esta = True
                 cursor.close()
                 return esta
+        except Exception as e:
+            print(str(e))
+            return False
+
+    """Este metodo se encarga de buscar un usuario en la base de datos
+        
+        Arguments:
+            id_usuario {Integer} -- el numero de documento del cliente o entidad
+        
+        Returns:
+            un objecto con la información del usuario
+        """
+    def search_usuario(self, id_usuario):
+        menus = self.menu_usuario(id_usuario)
+        usuario = {"id_usuario": "", "id_tipo_doc": "", "nombre": "", "apellido": "", "correo": "", "activo": 0, "menus":menus, "foto":""}
+        
+        try:
+            with self.conn.cursor() as cursor:
+                consulta = "SELECT * FROM usuario WHERE id_usuario = %s"
+                cursor.execute(consulta, (id_usuario,))
+                rows = cursor.fetchall()
+                for row in rows:
+                    usuario = {"id_usuario": row[0], "id_tipo_doc": row[1], "nombre": row[2], "apellido": row[3], "correo": row[4], "activo": row[6],"foto":row[7], "menus": menus}
+                cursor.close()
+                return {"status": 200, "usuario": usuario}
+        except Exception as e:
+            print(str(e))
+            self.anular_transaccion()
+            return  {"status": 500, "usuario": usuario}
+
+    """este metodo me permite anular la ultima transaccion realizada en la base de datos
+        
+        Returns:
+            retorna un true o false indicando el resultado de la operacion
+    """  
+    def anular_transaccion(self):
+          
+        try:
+            with self.conn.cursor() as cursor:
+                consulta = "ROLLBACK"
+                cursor.execute(consulta)
+                self.conn.commit()
+                cursor.close()
+                return True
         except Exception as e:
             print(str(e))
             return False
@@ -174,7 +218,7 @@ class Usuario:
     """  
     def iniciar_sesion(self, id_usuario,passwrd):
         menus = self.menu_usuario(id_usuario)
-        usuario = {"id_usuario": "", "id_tipo_doc": "", "nombre": "", "apellido": "", "correo": "", "activo": 0, "menus":menus}
+        usuario = {"id_usuario": "", "id_tipo_doc": "", "nombre": "", "apellido": "", "correo": "", "activo": 0, "menus":menus, "foto":""}
         
         try:
             contraseha = hashlib.new("sha1", passwrd.encode('utf-8'))
@@ -183,11 +227,12 @@ class Usuario:
                 cursor.execute(consulta, (id_usuario,str(contraseha.digest())))
                 rows = cursor.fetchall()
                 for row in rows:
-                    usuario = {"id_usuario": row[0], "id_tipo_doc": row[1], "nombre": row[2], "apellido": row[3], "correo": row[4], "activo": row[6], "menus": menus}
+                    usuario = {"id_usuario": row[0], "id_tipo_doc": row[1], "nombre": row[2], "apellido": row[3], "correo": row[4], "activo": row[6],"foto":row[7], "menus": menus}
                 cursor.close()
                 return {"status": 200, "usuario": usuario}
         except Exception as e:
             print(str(e))
+            self.anular_transaccion()
             return  {"status": 500, "usuario": usuario}
 
     """metodo que me da los permisos o menus relacionados a un usuario
@@ -207,6 +252,28 @@ class Usuario:
                 rows = cursor.fetchall()
                 for row in rows:
                     menus.append(row[0])
+                cursor.close()
+                return menus
+        except Exception as e:
+            print(str(e))
+            return  menus
+
+    """metodo que me da los permisos o menus activos en el sistema
+        
+        Arguments:
+        
+        Returns:
+            una lista de strings que indican el nombre de cada menu
+     """
+    def get_menus(self):  
+        menus = []
+        try:
+            with self.conn.cursor() as cursor:
+                consulta = "SELECT id_menu FROM menu WHERE activo = true"
+                cursor.execute(consulta)
+                rows = cursor.fetchall()
+                for row in rows:
+                    menus.append({"id_menu":row[0], "activo":0})
                 cursor.close()
                 return menus
         except Exception as e:
