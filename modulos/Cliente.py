@@ -24,7 +24,7 @@ class Cliente:
             with self.conn.cursor() as cursor:
                 consulta = "INSERT INTO cliente (id_cliente, id_tipo_doc, nombre, apellido, correo, activo) VALUES(%s,%s,%s,%s,%s,true)"
                 cursor.execute(
-                    consulta, (id_cliente, id_tipo_doc, nombre, apellido, correo))
+                    consulta, (id_cliente, id_tipo_doc, nombre.upper(), apellido.upper(), correo))
                 self.conn.commit()
                 cursor.close()
                 self.insert_direccion(id_cliente, direcciones)
@@ -56,7 +56,7 @@ class Cliente:
         try:
             with self.conn.cursor() as cursor:
                 consulta = "UPDATE cliente  SET id_cliente = %s, id_tipo_doc = %s, nombre = %s , apellido = %s, correo = %s, activo = %s WHERE id_cliente = %s"
-                cursor.execute(consulta, (id_cliente, id_tipo_doc, nombre, apellido, correo, activo, id_client_aux))
+                cursor.execute(consulta, (id_cliente, id_tipo_doc, nombre.upper(), apellido.upper(), correo, activo, id_client_aux))
                 self.conn.commit()
                 cursor.close()
                 self.delete_telefono(id_cliente)
@@ -316,7 +316,7 @@ class Cliente:
                 for direccion in direcciones:
                     consulta = "INSERT INTO direccion (id_cliente, id_pais, id_ciudad, direccion, activo) VALUES(%s,%s,%s,%s,true)"
                     cursor.execute(
-                        consulta, (id_cliente, direccion["id_pais"], direccion["id_ciudad"], direccion["direccion"]))
+                        consulta, (id_cliente, direccion["id_pais"], direccion["id_ciudad"], direccion["direccion"].upper()))
                     self.conn.commit()
                 cursor.close()
                 return True

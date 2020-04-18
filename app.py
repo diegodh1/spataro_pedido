@@ -281,8 +281,9 @@ def editar_pedido():
     observacion=content['observacion']
     activo=content['activo']
     direccion = content['direccion']
+    id_usuario = content['id_usuario']
     ped = pedido.Pedido(conection.conn)
-    return ped.editar_pedido(id_pedido,id_cliente,fecha,firma,observacion,activo,direccion)
+    return ped.editar_pedido(id_pedido,id_cliente,fecha,firma,observacion,activo,direccion,id_usuario)
 
 """funcion encargada de recibir una peticion post en la ruta /search_ref
 

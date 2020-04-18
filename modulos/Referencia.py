@@ -36,26 +36,13 @@ class Referencia:
         rows = size[0]
         try:
             for i in range(rows):
-                self.insertar_referenca(df['referencia'][i], df['activo'][i])
-                self.insertar_color(df['color'][i], df['activo'][i])
+                self.insertar_referenca(df['referencia'][i],df['medida'][i], df['activo'][i])
+                self.insertar_color(df['color'][i],df['nombre'][i], df['activo'][i])
                 self.insertar_ref_color(df['referencia'][i],df['color'][i],df['activo'][i])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],36,df['talla36'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],37,df['talla37'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],38,df['talla38'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],39,df['talla39'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],40,df['talla40'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],41,df['talla41'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],42,df['talla42'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],43,df['talla43'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],44,df['talla44'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],45,df['talla45'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],46,df['talla46'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],47,df['talla47'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],48,df['talla48'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],49,df['talla49'][i],df['precio'][i+1])
-                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],50,df['talla50'][i],df['precio'][i+1])
+                self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],df['talla'][i],df['unidades'][i],df['precio'][i])
             return {"mensaje": "Registros Realizados", "status": 200}
         except Exception as e:
+            self.anular_transaccion()
             return {"mensaje": "No se pudo realizar el registro "+str(e), "status": 500}
 
     """este metodo se encarga de guardar las referencias en unidades
@@ -72,26 +59,13 @@ class Referencia:
         rows = size[0]
         try:
             for i in range(rows):
-                self.insertar_referenca(df['referencia'][i], df['activo'][i])
-                self.insertar_color(df['color'][i], df['activo'][i])
+                self.insertar_referenca(df['referencia'][i], df['medida'][i], df['activo'][i])
+                self.insertar_color(df['color'][i],df['nombre'][i],df['activo'][i])
                 self.insertar_ref_color(df['referencia'][i],df['color'][i],df['activo'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],36,df['talla36'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],37,df['talla37'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],38,df['talla38'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],39,df['talla39'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],40,df['talla40'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],41,df['talla41'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],42,df['talla42'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],43,df['talla43'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],44,df['talla44'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],45,df['talla45'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],46,df['talla46'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],47,df['talla47'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],48,df['talla48'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],49,df['talla49'][i],df['precio'][i])
-                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],50,df['talla50'][i],df['precio'][i])
+                self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],df['talla'][i],df['unidades'][i],df['precio'][i])
             return {"mensaje": "Registros Realizados", "status": 200}
         except Exception as e:
+            self.anular_transaccion()
             return {"mensaje": "No se pudo realizar el registro"+str(e), "status": 500}
 
     #-----metodos necesarios para crear o editar una referencia-----
@@ -105,18 +79,19 @@ class Referencia:
     Returns:
         un json indicando el resultado de la operacion
     """  
-    def insertar_referenca(self, id_referencia, activo):
+    def insertar_referenca(self, id_referencia,id_medida, activo):
         try:
             if self.existe_referencia(id_referencia):
-                self.editar_referencia(id_referencia, activo)
+                self.editar_referencia(id_referencia,id_medida, activo)
             else:
                 with self.conn.cursor() as cursor:
-                    consulta = "INSERT INTO referencia (id_referencia, activo) VALUES(%s,%s)"
-                    cursor.execute(consulta, (id_referencia, activo))
+                    consulta = "INSERT INTO referencia (id_referencia, id_medida, activo) VALUES(%s,%s,%s)"
+                    cursor.execute(consulta, (id_referencia, id_medida, activo))
                     self.conn.commit()
                     cursor.close()
             return {"message": "Registro Realizado", "status": "1"}
         except Exception as e:
+            self.anular_transaccion()
             return {"message": "Error"+str(e), "status": "2"}
 
     """este metodo se encarga de comprobar si existe o no una referencia en la base de datos
@@ -140,7 +115,7 @@ class Referencia:
                 cursor.close()
                 return esta
         except Exception as e:
-            print(str(e))
+            self.anular_transaccion()
             return False
 
     """este metodo se encarga de editar una referencia en la base de datos 
@@ -152,15 +127,16 @@ class Referencia:
     Returns:
         retorna un json indicando el resultado de la operacion
     """ 
-    def editar_referencia(self, id_referencia, activo):
+    def editar_referencia(self, id_referencia, id_medida, activo):
         try:
             with self.conn.cursor() as cursor:
-                consulta = "UPDATE referencia  SET activo = %s WHERE id_referencia = %s"
-                cursor.execute(consulta, (activo, id_referencia))
+                consulta = "UPDATE referencia  SET activo = %s, id_medida=%s WHERE id_referencia = %s"
+                cursor.execute(consulta, (activo, id_medida, id_referencia))
                 self.conn.commit()
                 cursor.close()
                 return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
+            self.anular_transaccion()
             return {"message": "Error"+str(e), "status": 500}
 
 
@@ -174,19 +150,20 @@ class Referencia:
     Returns:
         retorna un json indicando el resultado de la operacion
     """  
-    def insertar_color(self, id_color, activo):
+    def insertar_color(self, id_color,nombre, activo):
         try:
             if self.existe_color(id_color):
-                self.editar_color(id_color, activo)
+                self.editar_color(id_color,nombre, activo)
             else:
                 with self.conn.cursor() as cursor:
-                    consulta = "INSERT INTO color (id_color, activo) VALUES(%s,%s)"
-                    cursor.execute(consulta, (id_color, activo))
+                    consulta = "INSERT INTO color (id_color,nombre, activo) VALUES(%s,%s,%s)"
+                    cursor.execute(consulta, (id_color,nombre,activo))
                     self.conn.commit()
                     cursor.close()
 
             return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
+            self.anular_transaccion()
             return {"message": "Error"+str(e), "status": 500}
     
     """este metodo se encarga de comprobar si existe un color o no en la base de datos
@@ -210,7 +187,7 @@ class Referencia:
                 cursor.close()
                 return esta
         except Exception as e:
-            print(str(e))
+            self.anular_transaccion()
             return False
 
     """este metodo se encarga de editar un color en la base de datos
@@ -222,15 +199,16 @@ class Referencia:
     Returns:
         retorna un json indicando el resultado de la operacion
     """ 
-    def editar_color(self, id_color, activo):   
+    def editar_color(self, id_color, nombre, activo):   
         try:
             with self.conn.cursor() as cursor:
-                consulta = "UPDATE color SET activo = %s WHERE id_color = %s"
-                cursor.execute(consulta, (activo, id_color))
+                consulta = "UPDATE color SET activo = %s, nombre=%s WHERE id_color = %s"
+                cursor.execute(consulta, (activo, nombre, id_color))
                 self.conn.commit()
                 cursor.close()
                 return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
+            self.anular_transaccion()
             return {"message": "Error"+str(e), "status": 500}
 
     #-----metodos necesarios para crear o editar un ref_color-----
@@ -258,6 +236,7 @@ class Referencia:
 
             return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
+            self.anular_transaccion()
             return {"message": "Error"+str(e), "status": 500}
     
     """este metodo se encarga se saber si existe o no una referencia-color
@@ -282,7 +261,7 @@ class Referencia:
                 cursor.close()
                 return esta
         except Exception as e:
-            print(str(e))
+            self.anular_transaccion()
             return False
 
     """este metodo se encarga de editar una referencia en la base de datos
@@ -304,6 +283,7 @@ class Referencia:
                 cursor.close()
                 return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
+            self.anular_transaccion()
             return {"message": "Error"+str(e), "status": 500}
 
     """este metodo se encarga de seleccionar el id de la referencia-color
@@ -326,7 +306,7 @@ class Referencia:
                 cursor.close()
                 return '-1'
         except Exception as e:
-            print(str(e))
+            self.anular_transaccion()
             return '-1'
 
     #-----metodos necesarios para crear o editar un ref_color_talla-----
@@ -351,12 +331,14 @@ class Referencia:
             else:
                 with self.conn.cursor() as cursor:
                     consulta = "INSERT INTO ref_color_talla (id_ref_color, id_talla, unidades, precio, metros) VALUES(%s,%s,%s,%s,0)"
-                    cursor.execute(consulta, (id_ref_color, id_talla, int(str(unidades)), int(str(precio))))
+                    unidades = int(str(unidades))
+                    precio = float(str(precio))
+                    cursor.execute(consulta, (id_ref_color, str(id_talla), unidades, precio))
                     self.conn.commit()
                     cursor.close()
             return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
-            print(str(e))
+            self.anular_transaccion()
             return {"message": "Error"+str(e), "status": 500}
 
     """este metodo se encarga de insertar una referencia-color-talla en la base de datos en metros
@@ -375,20 +357,38 @@ class Referencia:
         try:
             id_ref_color = self.select_ref_color(id_referencia,id_color)
             if self.existe_ref_color_talla(id_ref_color, id_talla):
-                self.editar_ref_color_talla_u(id_ref_color, id_talla, metros, precio)
+                self.editar_ref_color_talla_m(id_ref_color, id_talla, metros, precio)
             else:
                 with self.conn.cursor() as cursor:
                     consulta = "INSERT INTO ref_color_talla (id_ref_color, id_talla, metros, precio, unidades) VALUES(%s,%s,%s,%s,0)"
-                    cursor.execute(consulta, (id_ref_color, id_talla, metros, precio))
+                    metros = float(str(metros))
+                    precio = float(str(precio))                    
+                    cursor.execute(consulta, (id_ref_color, str(id_talla), metros, precio))
                     self.conn.commit()
                     cursor.close()
 
             return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
-            print(str(e))
+            self.anular_transaccion()
             return {"message": "Error"+str(e), "status": 500}
     
-
+    """este metodo me permite anular la ultima transaccion realizada en la base de datos
+        
+        Returns:
+            retorna un true o false indicando el resultado de la operacion
+    """  
+    def anular_transaccion(self):
+          
+        try:
+            with self.conn.cursor() as cursor:
+                consulta = "ROLLBACK"
+                cursor.execute(consulta)
+                self.conn.commit()
+                cursor.close()
+                return True
+        except Exception as e:
+            print(str(e))
+            return False
     """se encarga de comprobar si existe o no una referencia-color-talla
         
     Arguments:
@@ -402,7 +402,7 @@ class Referencia:
         try:
             with self.conn.cursor() as cursor:
                 consulta = "SELECT COUNT(*) as cantidad FROM ref_color_talla WHERE id_ref_color = %s AND id_talla=%s"
-                cursor.execute(consulta, (id_ref_color,id_talla))
+                cursor.execute(consulta, (id_ref_color,str(id_talla)))
                 rows = cursor.fetchall()
                 esta = False
                 for row in rows:
@@ -411,7 +411,7 @@ class Referencia:
                 cursor.close()
                 return esta
         except Exception as e:
-            str(e)
+            self.anular_transaccion()
             return False
 
 
@@ -430,11 +430,12 @@ class Referencia:
         try:
             with self.conn.cursor() as cursor:
                 consulta = "UPDATE ref_color_talla SET unidades = %s, precio=%s  WHERE id_ref_color=%s AND id_talla = %s"
-                cursor.execute(consulta, (int(str(unidades)), int(str(precio)), id_ref_color, id_talla))
+                cursor.execute(consulta, (int(str(unidades)), int(str(precio)), id_ref_color, str(id_talla)))
                 self.conn.commit()
                 cursor.close()
                 return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
+            self.anular_transaccion()
             return {"message": "Error"+str(e), "status": 500}
 
     """este metodo se encarga de editar una referencia-color-talla de la base de datos en metros
@@ -452,11 +453,12 @@ class Referencia:
         try:
             with self.conn.cursor() as cursor:
                 consulta = "UPDATE ref_color_talla SET metros = %s, precio=%s  WHERE id_ref_color=%s AND id_talla = %s"
-                cursor.execute(consulta, (int(str(metros)), int(str(precio)), id_ref_color, id_talla))
+                cursor.execute(consulta, (float(str(metros)), float(str(precio)), id_ref_color, str(id_talla)))
                 self.conn.commit()
                 cursor.close()
                 return {"message": "Registro Realizado", "status": 200}
         except Exception as e:
+            self.anular_transaccion()
             return {"message": "Error"+str(e), "status": 500}
     
     """este metodo se encarga de buscar una lista de referencia-color que coincida con el input
@@ -481,7 +483,7 @@ class Referencia:
                 cursor.close()
                 return {"status":200, "sugerencias": sugerencias}
         except Exception as e:
-            str(e)
+            self.anular_transaccion()
             return {"status":500, "sugerencias": []}
 
     """este metodo se encarga de buscar una lista de referencia-color-talla que coincida con el input
@@ -504,6 +506,6 @@ class Referencia:
                 cursor.close()
                 return {"status":200, "referencia_talla": referencia_talla}
         except Exception as e:
-            str(e)
+            self.anular_transaccion()
             return {"status":500, "referencia_talla": []}
 

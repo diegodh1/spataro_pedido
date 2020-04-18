@@ -3,6 +3,9 @@ from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from os.path import basename
+import email
+import email.mime.application
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter, A4, landscape, legal
 from reportlab.lib.units import cm, mm
@@ -17,6 +20,32 @@ import locale
 class Pedido:
     def __init__(self, conn):
         self.conn = conn
+
+    def enviar_correo(self,id_usuario,id_pedido, correo):
+        subject = "Nuevo Pedido Generado"
+        body = "El pedido "+str(id_pedido)+" ha sido generado por el usuario "+str(id_usuario)
+        sender_email = "diegodiazh1994@gmail.com"
+        receiver_email = correo
+        password ="cristiano1994"
+        message = MIMEMultipart()
+        message["From"] = sender_email
+        message["To"] = receiver_email
+        message["Subject"] = subject
+        message["Bcc"] = receiver_email
+        message.attach(MIMEText(body, "plain"))
+        filename = str(id_usuario)+".pdf"
+        with open(filename, "rb") as attachment:
+            part = MIMEBase("application", "octet-stream")
+            part.set_payload(attachment.read())
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition",f"attachment; filename= {filename}",)
+        message.attach(part)
+        text = message.as_string()
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+            server.login(sender_email, password)
+            server.sendmail(sender_email, receiver_email, text)
+
     """Este metodo se encarga de realizar un nuevo pedido
         Arguments:
             id_cliente {bigint} -- el id del cliente al cual se le va a realizar el pedido
@@ -309,7 +338,7 @@ class Pedido:
         Returns:
             retorna un json indicando el resultado de la operacion
     """ 
-    def editar_pedido(self, id_pedido, id_cliente,fecha, firma, observacion, activo, direccion):
+    def editar_pedido(self, id_pedido, id_cliente,fecha, firma, observacion, activo, direccion, id_usuario):
                
         try:
             with self.conn.cursor() as cursor:
@@ -317,6 +346,11 @@ class Pedido:
                 cursor.execute(consulta, (id_cliente, fecha, firma, observacion, activo, direccion, id_pedido))
                 self.conn.commit()
                 cursor.close()
+                if(activo == 'ENVIADO'):
+                    self.generar_pdf(id_pedido, id_usuario)
+                    correo = self.dar_correo_cliente(id_pedido)
+                    self.enviar_correo(id_usuario,id_pedido,correo)
+                    self.enviar_correo(id_usuario,id_pedido,"asistente.mercadeo@spataro.com.co")
                 return {"message": "Cambios Realizados", "status": 200}
         except Exception as e:
             self.anular_transaccion()
@@ -349,6 +383,23 @@ class Pedido:
             print(str(e))
             self.anular_transaccion()
             return {"items": [], "precio_total": 0, "unidades_total": 0, "status": 500}
+
+    def dar_correo_cliente(self, id_pedido):
+        correo = "leonardo.sabogal@spataro.com"
+        try:
+            with self.conn.cursor() as cursor:
+                consulta = """select cliente.correo from pedido join cliente on cliente.id_cliente = pedido.id_cliente where pedido.id_pedido = %s
+                """
+                cursor.execute(consulta, (id_pedido,))
+                rows = cursor.fetchall()
+                for row in rows:
+                    correo = row[0]
+                cursor.close()
+                return correo
+        except Exception as e:
+            print(str(e))
+            self.anular_transaccion()
+            return correo
 
 
     """este metodo se encarga de dar sumar los precios*unidad de los items guardados por el usuario
@@ -439,8 +490,8 @@ class Pedido:
     def buscar_referencia_color(self, id_referencia):
         try:
             with self.conn.cursor() as cursor:
-                consulta = """SELECT DISTINCT RC.id_ref_color, RC.id_color FROM referencia as R INNER JOIN ref_color AS RC ON RC.id_referencia = R.id_referencia AND RC.activo = 'A' 
-                WHERE R.id_referencia = %s and R.activo = 'A'"""
+                consulta = """SELECT DISTINCT RC.id_ref_color, (RC.id_color ||' '||COL.nombre) FROM referencia as R INNER JOIN ref_color AS RC ON RC.id_referencia = R.id_referencia AND RC.activo = 'A' 
+                 INNER JOIN color AS COL ON COL.id_color = RC.id_color WHERE R.id_referencia = %s and R.activo = 'A'"""
                 cursor.execute(consulta, (id_referencia.upper(),))
                 rows = cursor.fetchall()
                 sugerencias = []
@@ -469,8 +520,8 @@ class Pedido:
                 rows = cursor.fetchall()
                 sugerencias = []
                 for row in rows:
-                    sugerencias.append({"id_ref_color":row[0], "id_talla": row[1], "id_consecutivo": row[2],
-                    "unidades": row[3], "metros": row[4], "precio": row[5]})
+                    sugerencias.append({"id_ref_color":row[0], "id_talla": row[5], "id_consecutivo": row[1],
+                    "unidades": row[2], "metros": row[3], "precio": row[4]})
                 cursor.close()
                 return {"status":200, "sugerencias": sugerencias}
         except Exception as e:
@@ -489,7 +540,6 @@ class Pedido:
     def get_encabezado_pedido(self, id_pedido):
         today = str(date.today())
         data =[]
-        data.append(['Fecha', 'Vendedor','Id Vendedor', 'Cliente', 'NIT O C.C','Dirección Despacho', 'Fecha Despacho'])
         pedido ={"data": data,"firma":"", "observacion": ""}
         try:
             with self.conn.cursor() as cursor:
@@ -498,12 +548,15 @@ class Pedido:
                 cursor.execute(consulta, (id_pedido,))
                 rows = cursor.fetchall()
                 for row in rows:
-                    data.append([today, row[0], row[1], row[2], row[3], row[4], row[5]])
+                    data.append(['Fecha', 'Vendedor','I.D Vendedor',''])
+                    data.append([today, row[0], row[1]])
+                    data.append(['Cliente', 'NIT O C.C','Dirección Despacho','Fecha Despacho'])
+                    data.append([row[2], row[3], row[4], row[5]])
                     pedido ={"observacion": row[7],"firma":row[6], "data": data}
                 cursor.close()
                 return pedido
         except Exception as e:
-            print(str(e))
+            print(str(data))
             self.anular_transaccion()
             return pedido
 
@@ -534,40 +587,6 @@ class Pedido:
             print(str(e))
             self.anular_transaccion()
             return data
-    """este metodo se encarga de dar las tallas para imprimir
-        
-    Arguments:
-        
-    Returns:
-        retorna un objeto con la información de las tallas
-    """ 
-    def get_tallas(self,id_pedido):
-        data =[]
-        numeros = ['REFERENCIA', 'COLORES']
-        medidas = ['','','S','','M','','','L','','XL','','XXL','','','XXXL','','','','']
-        alternativas = ['','']
-        try:
-            with self.conn.cursor() as cursor:
-                consulta = """SELECT id_talla, talla_alternativa FROM talla"""
-                cursor.execute(consulta)
-                rows = cursor.fetchall()
-                for row in rows:
-                    numeros.append(row[0])
-                    alternativas.append(row[1])
-                cursor.close()
-                numeros.append('PRECIO UNITARIO')
-                numeros.append('VALOR')
-                alternativas.append('')
-                alternativas.append('')
-                data.append(numeros)
-                data.append(medidas)
-                data.append(alternativas)
-                data = self.get_registros_pedido(id_pedido,data)
-                return {"data": data, "numeros":numeros}
-        except Exception as e:
-            print(str(e))
-            self.anular_transaccion()
-            return {"data": data, "numeros":numeros}
 
     """este metodo se encarga de dar las unidades registradas de un pedido       
     Arguments:
@@ -575,35 +594,24 @@ class Pedido:
     Returns:
         retorna un arreglo con las unidades registradas
     """ 
-    def get_registros_pedido(self, id_pedido, tabla):
-        temp = ['','','36','37','38','39','40','41','42','43','44','45','46','47','48','49','50','','']
+    def get_registros_pedido(self, id_pedido):
+        resultado = [['REFERENCIA', 'COLOR', 'TALLA', 'UNIDADES', 'PRECIO UNITARIO']]
         try:
             with self.conn.cursor() as cursor:
-                consulta = """SELECT RC.id_referencia,RC.id_color,RCT.id_talla, PD.unidades, PD.precio, PD.precio*PD.unidades FROM ped_referencia AS PD 
+                consulta = """SELECT RC.id_referencia,RC.id_color,RCT.id_talla, PD.unidades, PD.precio FROM ped_referencia AS PD 
                         JOIN ref_color_talla AS RCT ON RCT.id_consecutivo = PD.id_consecutivo
                         JOIN ref_color as RC ON RC.id_ref_color = RCT.id_ref_color
                         WHERE id_pedido = %s"""
                 cursor.execute(consulta,(id_pedido,))
                 rows = cursor.fetchall()
                 for row in rows:
-                    temp_reg = ['','','','','','','','','','','','','','','','','','','']
-                    temp_reg[0]=row[0]
-                    temp_reg[1]=row[1]
-                    for i in range(0,len(temp)):
-                        if str(row[2]) == str(temp[i]):
-                            temp_reg[i]=row[3]
-                    locale.setlocale( locale.LC_ALL, '' )
-                    precio = locale.currency(float(row[4]), grouping=True)
-                    valor_total = locale.currency(float(row[5]), grouping=True)
-                    temp_reg[17]=precio
-                    temp_reg[18]=valor_total
-                    tabla.append(temp_reg)
+                    resultado.append([row[0],row[1],row[2],row[3],row[4]])
                 cursor.close()
-                return tabla
+                return resultado
         except Exception as e:
             print(str(e))
             self.anular_transaccion()
-            tabla
+            return resultado
 
     """
     Add the page number
@@ -627,12 +635,20 @@ class Pedido:
         title_style.fontSize = 20
         story = []
         #stylos de la tabla
-        table_style = TableStyle([('BACKGROUND',(0,0),(8,0), colors.gold),
-        ('FONTSIZE', (0, 0), (-1, 0), 14),
-        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        table_style = TableStyle([('BACKGROUND',(0,0),(3,0), colors.gold),
+        ('BACKGROUND',(0,2),(3,2), colors.gold),
+        ('SPAN',(1,0),(2,0)),
+        ('SPAN',(1,1),(2,1)),
+        ('FONTSIZE', (0, 0), (-1, 0), 13),
+        ('FONTSIZE', (0, 1), (-1, -1), 11),
         ('TEXTCOLOR',(0,0),(-1,0),colors.black),
         ('FONTNAME',(0,0),(-1,-1),'Times-Italic'),
+        ('GRID', (0,0), (-1,-1), 0.25, colors.red),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('ALIGN',(0,0),(-1,-1),'CENTER')])
+        im = Image("logo_spataro.png", width=150, height=150)
+        im.hAlign = 'LEFT'
+        story.append(im)
         story.append(Paragraph("Orden de Pedido # "+str(id_pedido),title_style))
         data=self.get_encabezado_pedido(id_pedido)
         encabezado_pedido=data["data"]
@@ -654,29 +670,14 @@ class Pedido:
         story.append(Spacer(0,10))
         #tabla detalle
         table_style = TableStyle([('BACKGROUND',(0,0),(18,0), colors.gold),
-        ('BACKGROUND',(0,0),(0,2), colors.gold),
-        ('BACKGROUND',(1,0),(1,2), colors.gold),
-        ('BACKGROUND',(17,0),(17,2), colors.gold),
-        ('BACKGROUND',(18,0),(18,2), colors.gold),
         ('FONTSIZE', (0, 0), (-1, 0), 10),
         ('FONTSIZE', (0, 1), (-1, -1), 9),
         ('TEXTCOLOR',(0,0),(-1,0),colors.black),
         ('FONTNAME',(0,0),(-1,-1),'Times-Italic'),
         ('GRID', (0,0), (-1,-1), 0.25, colors.red),
-        ('SPAN', (0, 0), (0, 2)),
-        ('SPAN', (1, 0), (1, 2)),
-        ('SPAN', (2, 1), (3, 1)),
-        ('SPAN', (4, 1), (6, 1)),
-        ('SPAN', (7, 1), (8, 1)),
-        ('SPAN', (9, 1), (10, 1)),
-        ('SPAN', (11, 1), (13, 1)),
-        ('SPAN', (14, 1), (16, 1)),
-        ('SPAN', (17, 0), (17, 2)),
-        ('SPAN', (18, 0), (18, 2)),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('ALIGN',(0,0),(-1,-1),'CENTER')])
-        data_pedido = self.get_tallas(id_pedido)
-        detalle_encabezado = data_pedido['data']
+        detalle_encabezado = self.get_registros_pedido(id_pedido)
         table_encabezado = Table(detalle_encabezado)
         table_encabezado.setStyle(table_style)
         story.append(table_encabezado)
@@ -715,6 +716,7 @@ class Pedido:
         normal_style = styles['Normal']
         normal_style.fontName = 'Times-Italic'
         normal_style.fontSize = 16
+        normal_style.leading = 20
         story.append(Paragraph("""Nota:""",normal_style))
         story.append(Spacer(0,8))
         story.append(Paragraph("""Los despachos podrán tener una toleracia de más o menos 10% en unidades.""",normal_style))
@@ -724,5 +726,5 @@ class Pedido:
         story.append(Paragraph("""La mercancia que trata el presente documento se considera en consignación hasta tanto no haya sido cancelada la totalidad de su valor.""",normal_style))
         
         
-        doc = SimpleDocTemplate(str(id_usuario)+".pdf", pagesize=landscape(letter))
+        doc = SimpleDocTemplate(str(id_usuario)+".pdf", pagesize=legal, topMargin=3)
         doc.build(story, onFirstPage=self.addPageNumber, onLaterPages=self.addPageNumber)
