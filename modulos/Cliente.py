@@ -20,7 +20,7 @@ class Cliente:
     def crear_clientes(self, id_cliente, id_tipo_doc, nombre, apellido, correo, direcciones, telefonos):
         try:
             if self.existe_cliente(id_cliente):
-                return {"message": "El cliente ya está registrado", "status": "0"}
+                return {"message": "El cliente ya está registrado", "status": 400, "payload":None}
             with self.conn.cursor() as cursor:
                 consulta = "INSERT INTO cliente (id_cliente, id_tipo_doc, nombre, apellido, correo, activo) VALUES(%s,%s,%s,%s,%s,true)"
                 cursor.execute(
@@ -29,10 +29,10 @@ class Cliente:
                 cursor.close()
                 self.insert_direccion(id_cliente, direcciones)
                 self.insert_telefono(id_cliente, telefonos)
-                return {"message": "Registro Realizado", "status": 200}
+                return {"message": "Registro Realizado", "status": 200, "payload":None}
         except Exception as e:
             self.anular_transaccion()
-            return {"message": "Error "+str(e), "status": 500}
+            return {"message": "Error "+str(e), "status": 500, "payload":None}
     
 
     """Este metodo se encarga de editar un cliente en la BD
@@ -63,10 +63,10 @@ class Cliente:
                 self.delete_direccion(id_cliente)
                 self.insert_direccion(id_cliente, direcciones)
                 self.insert_telefono(id_cliente, telefonos)
-                return {"message": "Registro Realizado", "status": 200}
+                return {"message": "Registro Actualizado", "status": 200, "payload":None}
         except Exception as e:
             self.anular_transaccion()
-            return {"message": "Error "+str(e), "status": 500}
+            return {"message": "Error "+str(e), "status": 500, "payload":None}
     
 
     """Este metodo se encarga de verificar que un cliente exista en la base de datos
@@ -78,7 +78,7 @@ class Cliente:
             boolean -- true o false de acuerdo si el cliente esta o no
         """
     def search_cliente(self, id_cliente):
-        cliente = {"direcciones":[],"telefonos":[],"id_cliente": "", "id_tipo_doc":"", "nombre":"", "apellido": "", "correo": "","activo": 0}
+        cliente = {"direcciones":[],"telefonos":[],"id_cliente": 0, "id_tipo_doc":"", "nombre":"", "apellido": "", "correo": "","activo": False}
         direcciones = self.search_direccion_cliente(id_cliente)
         telefonos = self.search_telefono_cliente(id_cliente)
         try:
@@ -87,13 +87,15 @@ class Cliente:
                 cursor.execute(consulta, (id_cliente,))
                 rows = cursor.fetchall()
                 for row in rows:
-                    cliente = {"id_cliente": row[0], "id_tipo_doc": row[1], "nombre": row[2], "apellido": row[3], "correo": row[4],"activo": row[5], "direcciones": direcciones, "telefonos": telefonos}
+                    cliente = {"id_cliente": row[0], "id_tipo_doc": row[1], "nombre": row[2], "apellido": row[3], "correo": row[4],"activo": False if row[5] == 0  else True, "direcciones": direcciones, "telefonos": telefonos}
                 cursor.close()
-                return cliente
+                if cliente["id_cliente"] == 0:
+                    return {"payload": cliente, "message":"Usuario no registrado", "status":200}
+                return {"payload": cliente, "message":"ok", "status":200}
         except Exception as e:
             self.anular_transaccion()
             print(str(e))
-            return cliente
+            return {"payload": None, "message":"Ups no pudimos obtener la información del cliente", "status":500}
 
     def search_direccion_cliente(self, id_cliente):
         direcciones = []
@@ -165,7 +167,7 @@ class Cliente:
                 cursor.execute(consulta)
                 rows = cursor.fetchall()
                 for row in rows:
-                    documentos.append({"id_tipo_doc":row[0]})
+                    documentos.append(row[0])
                 cursor.close()
                 return documentos
         except Exception as e:
@@ -335,7 +337,7 @@ class Cliente:
     def buscar_cliente(self, nombre, apellido):
         try:
             with self.conn.cursor() as cursor:
-                consulta = "SELECT * FROM cliente WHERE nombre like UPPER(%s) AND apellido like UPPER(%s) AND activo = true LIMIT 10"
+                consulta = "SELECT DISTINCT * FROM cliente WHERE nombre like UPPER(%s) AND apellido like UPPER(%s) AND activo = true LIMIT 10"
                 name_pattern = '%{}%'.format(nombre.upper())
                 apellido_pattern = '%{}%'.format(apellido.upper())
                 cursor.execute(consulta, (name_pattern,apellido_pattern))

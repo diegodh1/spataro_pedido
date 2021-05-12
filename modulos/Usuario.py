@@ -23,17 +23,17 @@ class Usuario:
         contraseha = hashlib.new("sha1", passwrd.encode('utf-8'))
         try:
             if self.existe_usuario(id_usuario):
-                return {"message": "El usuario ya está registrado", "status": "0"}
+                return {"message": "El usuario ya está registrado", "status": 400, "payload":None}
             with self.conn.cursor() as cursor:
                 consulta = "INSERT INTO usuario (id_usuario, id_tipo_doc, nombre, apellido, correo, passwrd, activo, foto) VALUES(%s,%s,%s,%s,%s,%s,true,%s)"
                 cursor.execute(consulta, (id_usuario, id_tipo_doc, nombre, apellido, correo, str(contraseha.digest()),foto))
                 self.conn.commit()
                 cursor.close()
                 self.insert_menu(id_usuario, menus, "true")
-                return {"message": "Registro Realizado", "status": 200}
+                return {"message": "Registro Realizado", "status": 200, "payload":None}
         except Exception as e:
             self.anular_transaccion()
-            return {"message": "Error "+str(e), "status": 500}
+            return {"message": "Error "+str(e), "status": 500, "payload":None}
     
 
     """Este metodo se encarga de editar un usuario en la BD
@@ -62,9 +62,9 @@ class Usuario:
                 cursor.close()
                 self.delete_menu(id_usuario)
                 self.insert_menu(id_usuario, menus, activo)
-                return {"message": "Registro Realizado", "status": 200}
+                return {"message": "Registro Actualizado", "status": 200, "payload":None}
         except Exception as e:
-            return {"message": "Error "+str(e), "status": 500}
+            return {"message": "Error "+str(e), "status": 500, "payload":None}
     
 
     """Este metodo se encarga de verificar que un usuario exista en la base de datos
@@ -102,7 +102,7 @@ class Usuario:
         """
     def search_usuario(self, id_usuario):
         menus = self.menu_usuario(id_usuario)
-        usuario = {"id_usuario": "", "id_tipo_doc": "", "nombre": "", "apellido": "", "correo": "", "activo": 0, "menus":menus, "foto":""}
+        usuario = {"id_usuario": 0, "id_tipo_doc": "", "nombre": "", "apellido": "", "correo": "", "activo": False, "menus":menus, "foto":""}
         
         try:
             with self.conn.cursor() as cursor:
@@ -110,13 +110,15 @@ class Usuario:
                 cursor.execute(consulta, (id_usuario,))
                 rows = cursor.fetchall()
                 for row in rows:
-                    usuario = {"id_usuario": row[0], "id_tipo_doc": row[1], "nombre": row[2], "apellido": row[3], "correo": row[4], "activo": row[6],"foto":row[7], "menus": menus}
+                    usuario = {"id_usuario": row[0], "id_tipo_doc": row[1], "nombre": row[2], "apellido": row[3], "correo": row[4], "activo": False if row[6] == 0 else True,"foto":row[7], "menus": menus}
                 cursor.close()
-                return {"status": 200, "usuario": usuario}
+                if usuario["id_usuario"] == 0:
+                    return {"status": 200, "payload": None, "message": "usuario no registrado"}
+                return {"status": 200, "payload": usuario, "message": "ok"}
         except Exception as e:
             print(str(e))
             self.anular_transaccion()
-            return  {"status": 500, "usuario": usuario}
+            return  {"status": 500, "payload": usuario, "message": "ups, algo salió mal en el servidor"}
 
     """este metodo me permite anular la ultima transaccion realizada en la base de datos
         
@@ -146,7 +148,7 @@ class Usuario:
     def delete_menu(self, id_usuario):
         try:
             with self.conn.cursor() as cursor:
-                consulta = "UPDATE usuario_menu SET activo = false WHERE id_usuario = %s"
+                consulta = "DELETE FROM usuario_menu WHERE id_usuario = %s"
                 cursor.execute(consulta, (id_usuario,))
                 self.conn.commit()
                 cursor.close()
@@ -165,16 +167,16 @@ class Usuario:
             boolean -- true o false de acuerdo si se insertaron o no los permisos
     """
     def insert_menu(self, id_usuario, menus, activo):
-
         try:
+            self.delete_menu(id_usuario)
             with self.conn.cursor() as cursor:
                 for menu in menus:
                     consulta = "INSERT INTO usuario_menu (activo, id_usuario, id_menu) VALUES(%s,%s,%s)"
-                    esta = self.existe_menu(id_usuario, menu["id_menu"]) 
+                    esta = self.existe_menu(id_usuario, menu) 
                     if esta == True:
                         consulta = "UPDATE usuario_menu SET activo = %s WHERE id_usuario = %s AND id_menu = %s"
                     print(esta)
-                    cursor.execute(consulta, (activo, id_usuario, menu["id_menu"]))
+                    cursor.execute(consulta, (activo, id_usuario, menu))
                     self.conn.commit()
                 cursor.close()
                 return True
@@ -218,7 +220,7 @@ class Usuario:
     """  
     def iniciar_sesion(self, id_usuario,passwrd):
         menus = self.menu_usuario(id_usuario)
-        usuario = {"id_usuario": "", "id_tipo_doc": "", "nombre": "", "apellido": "", "correo": "", "activo": 0, "menus":menus, "foto":""}
+        usuario = {"id_usuario": 0, "id_tipo_doc": "", "nombre": "", "apellido": "", "correo": "", "activo": False, "menus":menus, "foto":""}
         
         try:
             contraseha = hashlib.new("sha1", passwrd.encode('utf-8'))
@@ -227,13 +229,15 @@ class Usuario:
                 cursor.execute(consulta, (id_usuario,str(contraseha.digest())))
                 rows = cursor.fetchall()
                 for row in rows:
-                    usuario = {"id_usuario": row[0], "id_tipo_doc": row[1], "nombre": row[2], "apellido": row[3], "correo": row[4], "activo": row[6],"foto":row[7], "menus": menus}
+                    usuario = {"id_usuario": row[0], "id_tipo_doc": row[1], "nombre": row[2], "apellido": row[3], "correo": row[4], "activo": False if row[6]==0 else True,"foto":row[7], "menus": menus}
                 cursor.close()
-                return {"status": 200, "usuario": usuario}
+                if usuario["id_usuario"] == 0:
+                    return {"status": 401, "payload": usuario, "message": "usuario y/o contraseña incorrectos"}
+                return {"status": 200, "payload": usuario, "message": "ok"}
         except Exception as e:
             print(str(e))
             self.anular_transaccion()
-            return  {"status": 500, "usuario": usuario}
+            return  {"status": 500, "payload": usuario, "message": "No se pudo ingresar sesión"}
 
     """metodo que me da los permisos o menus relacionados a un usuario
         

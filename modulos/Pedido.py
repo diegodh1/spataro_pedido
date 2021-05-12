@@ -652,6 +652,14 @@ class Pedido:
         story.append(Paragraph("Orden de Pedido # "+str(id_pedido),title_style))
         data=self.get_encabezado_pedido(id_pedido)
         encabezado_pedido=data["data"]
+        table_style = TableStyle([('BACKGROUND',(0,0),(3,0), colors.gold),
+        ('FONTSIZE', (0, 0), (-1, 0), 13),
+        ('FONTSIZE', (0, 1), (-1, -1), 11),
+        ('TEXTCOLOR',(0,0),(-1,0),colors.black),
+        ('FONTNAME',(0,0),(-1,-1),'Times-Italic'),
+        ('GRID', (0,0), (-1,-1), 0.25, colors.red),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ALIGN',(0,0),(-1,-1),'CENTER')])
         table = Table(encabezado_pedido)
         table.setStyle(table_style)
         story.append(Spacer(0,10))

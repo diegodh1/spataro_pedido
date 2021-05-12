@@ -40,10 +40,10 @@ class Referencia:
                 self.insertar_color(df['color'][i],df['nombre'][i], df['activo'][i])
                 self.insertar_ref_color(df['referencia'][i],df['color'][i],df['activo'][i])
                 self.insertar_ref_color_talla_m(df['referencia'][i],df['color'][i],df['talla'][i],df['unidades'][i],df['precio'][i])
-            return {"mensaje": "Registros Realizados", "status": 200}
+            return {"message": "Registros Realizados", "status": 200}
         except Exception as e:
             self.anular_transaccion()
-            return {"mensaje": "No se pudo realizar el registro "+str(e), "status": 500}
+            return {"message": "No se pudo realizar el registro "+str(e), "status": 500}
 
     """este metodo se encarga de guardar las referencias en unidades
         
@@ -57,16 +57,17 @@ class Referencia:
         df = pd.read_excel(f)
         size = df.shape
         rows = size[0]
+        
         try:
             for i in range(rows):
                 self.insertar_referenca(df['referencia'][i], df['medida'][i], df['activo'][i])
                 self.insertar_color(df['color'][i],df['nombre'][i],df['activo'][i])
                 self.insertar_ref_color(df['referencia'][i],df['color'][i],df['activo'][i])
                 self.insertar_ref_color_talla_u(df['referencia'][i],df['color'][i],df['talla'][i],df['unidades'][i],df['precio'][i])
-            return {"mensaje": "Registros Realizados", "status": 200}
+            return {"message": "Registros Realizados", "status": 200}
         except Exception as e:
             self.anular_transaccion()
-            return {"mensaje": "No se pudo realizar el registro"+str(e), "status": 500}
+            return {"message": "No se pudo realizar el registro"+str(e), "status": 500}
 
     #-----metodos necesarios para crear o editar una referencia-----
 
@@ -80,6 +81,9 @@ class Referencia:
         un json indicando el resultado de la operacion
     """  
     def insertar_referenca(self, id_referencia,id_medida, activo):
+        id_referencia = id_referencia.strip()
+        id_medida = id_medida.strip()
+        activo = activo.strip()
         try:
             if self.existe_referencia(id_referencia):
                 self.editar_referencia(id_referencia,id_medida, activo)
@@ -91,6 +95,7 @@ class Referencia:
                     cursor.close()
             return {"message": "Registro Realizado", "status": "1"}
         except Exception as e:
+            print(str(e))
             self.anular_transaccion()
             return {"message": "Error"+str(e), "status": "2"}
 
@@ -151,6 +156,9 @@ class Referencia:
         retorna un json indicando el resultado de la operacion
     """  
     def insertar_color(self, id_color,nombre, activo):
+        id_color=id_color.strip()
+        nombre=nombre.strip()
+        activo=activo.strip()
         try:
             if self.existe_color(id_color):
                 self.editar_color(id_color,nombre, activo)
@@ -223,7 +231,9 @@ class Referencia:
         retorna un json indicando el resultado de la operacion
     """ 
     def insertar_ref_color(self, id_referencia, id_color, activo):
-   
+        id_referencia=id_referencia.strip()
+        id_color=id_color.strip()
+        activo=activo.strip()
         try:
             if self.existe_ref_color(id_referencia, id_color):
                 self.editar_ref_color(id_referencia, id_color, activo)
@@ -324,6 +334,8 @@ class Referencia:
         un json indicando el resultado de la operacion
     """  
     def insertar_ref_color_talla_u(self,id_referencia, id_color, id_talla, unidades, precio):
+        id_referencia = id_referencia.strip()
+        id_color = id_color.strip()
         try:
             id_ref_color = self.select_ref_color(id_referencia,id_color)
             if self.existe_ref_color_talla(id_ref_color, id_talla):
@@ -354,6 +366,8 @@ class Referencia:
         un json indicando el resultado de la operacion
     """  
     def insertar_ref_color_talla_m(self,id_referencia, id_color, id_talla, metros, precio):
+        id_referencia = id_referencia.strip()
+        id_color = id_color.strip()
         try:
             id_ref_color = self.select_ref_color(id_referencia,id_color)
             if self.existe_ref_color_talla(id_ref_color, id_talla):

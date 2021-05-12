@@ -50,7 +50,7 @@ Returns:
 def editar_cliente():
     content=request.get_json()
     id_cliente=content['id_cliente']
-    id_client_aux=content['id_client_aux']
+    id_client_aux= id_cliente
     id_tipo_doc=content['id_tipo_doc']
     nombre=content['nombre']
     apellido=content['apellido']
@@ -79,7 +79,7 @@ def buscar_cliente():
 Returns:
     un Json indicando el resultado de la operacion
 """
-@app.route('/get_documentos',methods=['POST'])
+@app.route('/get_documentos',methods=['GET'])
 def get_documentos():
     nuevo_cliente = cliente.Cliente(conection.conn)
     return jsonify(nuevo_cliente.get_documentos())
