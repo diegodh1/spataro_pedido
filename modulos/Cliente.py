@@ -334,13 +334,13 @@ class Cliente:
         Returns:
             JSON -- una lista de clientes que estan activosy coinciden con el nombre y el apellido
     """
-    def buscar_cliente(self, nombre, apellido):
+    def buscar_cliente(self, nombre):
+        
         try:
             with self.conn.cursor() as cursor:
-                consulta = "SELECT DISTINCT * FROM cliente WHERE nombre like UPPER(%s) AND apellido like UPPER(%s) AND activo = true LIMIT 10"
+                consulta = "SELECT DISTINCT * FROM cliente WHERE nombre like UPPER(%s) OR apellido like UPPER(%s) AND activo = true LIMIT 5"
                 name_pattern = '%{}%'.format(nombre.upper())
-                apellido_pattern = '%{}%'.format(apellido.upper())
-                cursor.execute(consulta, (name_pattern,apellido_pattern))
+                cursor.execute(consulta, (name_pattern,name_pattern))
                 rows = cursor.fetchall()
                 clientes = []
                 for row in rows:

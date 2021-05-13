@@ -70,9 +70,8 @@ Returns:
 def buscar_cliente():
     content=request.get_json()
     nombre=content['nombre']
-    apellido=content['apellido']
     nuevo_cliente = cliente.Cliente(conection.conn)
-    return jsonify(nuevo_cliente.buscar_cliente(nombre, apellido))
+    return jsonify(nuevo_cliente.buscar_cliente(nombre))
 
 """funcion encargada de recibir una peticion post en la ruta /get_documentos
 
