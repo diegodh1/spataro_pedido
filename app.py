@@ -284,6 +284,8 @@ def editar_pedido():
     ped = pedido.Pedido(conection.conn)
     return ped.editar_pedido(id_pedido,id_cliente,fecha,firma,observacion,activo,direccion,id_usuario)
 
+
+
 """funcion encargada de recibir una peticion post en la ruta /search_ref
 
 Returns:
@@ -316,7 +318,7 @@ Returns:
 @app.route('/search_ref_color_talla',methods=['POST'])
 def search_ref_color_talla():
     content=request.get_json()
-    id_ref_color=content['id_ref_color']
+    id_ref_color=content['id_referencia']
     ped = pedido.Pedido(conection.conn)
     return ped.buscar_referencia_color_talla(id_ref_color)
 
@@ -344,7 +346,7 @@ Returns:
 def eliminar_ref_unidades():
     content=request.get_json()
     id_pedido=content['id_pedido']
-    consecutivo=content['consecutivo']
+    consecutivo=content['id_consecutivo']
     ped = pedido.Pedido(conection.conn)
     return ped.eliminar_ref_unidades(id_pedido,consecutivo)
 

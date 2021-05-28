@@ -475,6 +475,30 @@ class Referencia:
             self.anular_transaccion()
             return {"message": "Error"+str(e), "status": 500}
     
+
+    """este metodo se encarga de buscar una lista de referencia-color que coincida con el input
+        
+    Arguments:
+    id_referencia {char(50)} -- el id de la referencia a buscar
+        
+    Returns:
+        retorna una lista de referencias-color que coinciden con el patron
+    """ 
+    def buscar_referencia_only(self, id_referencia):
+        try:
+            with self.conn.cursor() as cursor:
+                consulta = """SELECT referencia.* FROM referencia WHERE R.id_referencia like UPPER(%s) and R.activo = 'A' LIMIT 7"""
+                ref_pattern = '%{}%'.format(id_referencia)
+                cursor.execute(consulta, (ref_pattern,))
+                rows = cursor.fetchall()
+                sugerencias = []
+                for row in rows:
+                    sugerencias.append(row[0])
+                cursor.close()
+                return sugerencias
+        except Exception as e:
+            self.anular_transaccion()
+            return []
     """este metodo se encarga de buscar una lista de referencia-color que coincida con el input
         
     Arguments:

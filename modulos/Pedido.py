@@ -65,10 +65,10 @@ class Pedido:
                 self.conn.commit()
                 cursor.close()
                 pedido = self.get_last_id_pedido(id_usuario)
-                return {"message": "Registro Realizado", "status": 200,"id_pedido":pedido}
+                return {"message": "Registro Realizado", "status": 200,"payload":pedido}
         except Exception as e:
             self.anular_transaccion()
-            return {"message": "Error "+str(e), "status": 500,"id_pedido": -1}
+            return {"message": "Error "+str(e), "status": 500,"payload": -1}
 
     """Este metodo se encarga de dar el id del ultimo pedido que creo el usuario
         Arguments:
@@ -162,7 +162,7 @@ class Pedido:
                     cursor.close()
                     und = und - unidades
                     if self.actualizar_unidades(id_consecutivo,und):
-                        return {"message": "Registro Realizado", "status": 200}
+                        return {"message": "Nueva Referencia Agregada", "status": 200}
                     else:
                         self.anular_transaccion()
                         return {"message": "No se pudo actaulizar las unidades", "status": 200}
@@ -376,13 +376,15 @@ class Pedido:
                 for row in rows:
                     items.append({"referencia": row[0], "color": row[1], "unidades": str(row[2]), "precio": str(row[3]), "id_talla": str(row[4]), "id_consecutivo": str(row[5])})
                 cursor.close()
-                precio_total = str(self.sumar_items_guardados(id_pedido))
-                unidades_total = str(self.contar_items_guardados(id_pedido))
-                return {"items": items, "precio_total": precio_total, "unidades_total": unidades_total, "status": 200}
+                suma = self.sumar_items_guardados(id_pedido)
+                count = self.contar_items_guardados(id_pedido)
+                precio_total = suma if suma != None else 0
+                unidades_total = count if count != None else 0
+                return {"payload":{"items": items, "precio_total": str(precio_total), "unidades_total": str(unidades_total)}, "status": 200}
         except Exception as e:
             print(str(e))
             self.anular_transaccion()
-            return {"items": [], "precio_total": 0, "unidades_total": 0, "status": 500}
+            return {"payload":{"items": [], "precio_total": 0, "unidades_total": 0}, "status": 500}
 
     def dar_correo_cliente(self, id_pedido):
         correo = "leonardo.sabogal@spataro.com"
@@ -471,13 +473,13 @@ class Pedido:
                 rows = cursor.fetchall()
                 sugerencias = []
                 for row in rows:
-                    sugerencias.append({"label":row[0], "value": row[0]})
+                    sugerencias.append(row[0])
                 cursor.close()
-                return {"status":200, "sugerencias": sugerencias}
+                return {"payload":sugerencias}
         except Exception as e:
             str(e)
             self.anular_transaccion()
-            return {"status":500, "sugerencias": []}
+            return {"payload":[]}
 
     """este metodo se encarga de buscar una lista de referencia-color que coincida con el input
         
@@ -498,11 +500,11 @@ class Pedido:
                 for row in rows:
                     sugerencias.append({"value":row[0], "label": row[1]})
                 cursor.close()
-                return {"status":200, "sugerencias": sugerencias}
+                return {"status":200, "payload": sugerencias}
         except Exception as e:
             str(e)
             self.anular_transaccion()
-            return {"status":500, "sugerencias": []}
+            return {"status":500, "payload": []}
 
     """este metodo se encarga de buscar una lista de referencia-color-talla que coincida con el input
         
@@ -520,14 +522,13 @@ class Pedido:
                 rows = cursor.fetchall()
                 sugerencias = []
                 for row in rows:
-                    sugerencias.append({"id_ref_color":row[0], "id_talla": row[5], "id_consecutivo": row[1],
-                    "unidades": row[2], "metros": row[3], "precio": row[4]})
+                    sugerencias.append({"id_talla": row[5], "id_consecutivo": row[1],"unidades": row[2], "metros": row[3], "precio": row[4]})
                 cursor.close()
-                return {"status":200, "sugerencias": sugerencias}
+                return {"status":200, "payload": sugerencias}
         except Exception as e:
             str(e)
             self.anular_transaccion()
-            return {"status":500, "sugerencias": []}
+            return {"status":500, "payload": []}
 
     """este metodo se encarga de dar el encabezado del pedido a imprimir
         
