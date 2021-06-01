@@ -298,6 +298,20 @@ def search_ref():
     ped = pedido.Pedido(conection.conn)
     return ped.buscar_referencia(id_referencia)
 
+
+"""funcion encargada de recibir una peticion post en la ruta /search_pedidos_usuario
+
+Returns:
+    un Json indicando el resultado de la operacion
+"""
+@app.route('/search_pedidos_usuario',methods=['POST'])
+def search_pedidos_usuario():
+    content=request.get_json()
+    id_usuario=content['id_usuario']
+    ped = pedido.Pedido(conection.conn)
+    return ped.search_pedidos_usuario(id_usuario)
+
+
 """funcion encargada de recibir una peticion post en la ruta /search_ref_color
 
 Returns:

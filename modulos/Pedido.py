@@ -135,6 +135,21 @@ class Pedido:
             print(str(e))
             return cliente
 
+    def search_pedidos_usuario(self, id_usuario):
+        pedidos = []
+        try:
+            with self.conn.cursor() as cursor:
+                consulta = "select pedido.id_pedido, concat(cliente.nombre,' ',cliente.apellido) from pedido join cliente on cliente.id_cliente = pedido.id_cliente where id_usuario = %s order by pedido.id_pedido desc"
+                cursor.execute(consulta, (id_usuario,))
+                rows = cursor.fetchall()
+                for row in rows:
+                    pedidos.append({"id_pedido": row[0], "id_cliente": row[1]})
+                cursor.close()
+                return {"payload":pedidos, "status":200}
+        except Exception as e:
+            self.anular_transaccion()
+            return {"payload":pedidos, "status":500}
+
     """Este metodo se encarga de agregar un nuevo item al pedido 
         
         Arguments:
