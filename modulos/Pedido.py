@@ -24,9 +24,9 @@ class Pedido:
     def enviar_correo(self,id_usuario,id_pedido, correo):
         subject = "Nuevo Pedido Generado"
         body = "El pedido "+str(id_pedido)+" ha sido generado por el usuario "+str(id_usuario)
-        sender_email = "diegodiazh1994@gmail.com"
+        sender_email = "spataro.comunicador@gmail.com"
         receiver_email = correo
-        password ="cristiano1994"
+        password ="Spataro123456"
         message = MIMEMultipart()
         message["From"] = sender_email
         message["To"] = receiver_email
@@ -100,8 +100,8 @@ class Pedido:
     """
     def search_pedido(self, id_pedido):
         id_cliente = -1
-        cliente = {"id_cliente": "", "id_tipo_doc": "", "nombre": "", "apellido": "", "correo": "","activo": "", "direcciones": [], "telefonos": []}
-        pedido = {"id_pedido":"", "id_cliente": "", "id_usuario": "", "fecha":"", "firma":"", "observacion":"", "activo": "", "direccion":""}
+        cliente = {"id_cliente": 0, "id_tipo_doc": "", "nombre": "", "apellido": "", "correo": "","activo": "", "direcciones": [], "telefonos": []}
+        pedido = {"id_pedido":-1, "id_cliente": 0, "id_usuario":0, "fecha":"", "firma":"", "observacion":"", "activo": "", "direccion":""}
         try:
             with self.conn.cursor() as cursor:
                 consulta = "SELECT id_pedido, id_cliente, id_usuario,TO_CHAR(fecha, 'YYYY-MM-DD'), firma, observacion, activo, direccion  FROM pedido WHERE id_pedido = %s "
@@ -120,7 +120,7 @@ class Pedido:
             return pedido
 
     def search_cliente(self, id_cliente):
-        cliente = {"id_cliente": "", "id_tipo_doc":"", "nombre":"", "apellido": "", "correo": "","activo": 0}
+        cliente = {"id_cliente": 0, "id_tipo_doc":"", "nombre":"", "apellido": "", "correo": "","activo": 0}
         try:
             with self.conn.cursor() as cursor:
                 consulta = "SELECT * FROM cliente WHERE id_cliente = %s"
@@ -691,7 +691,7 @@ class Pedido:
         table_encabezado.setStyle(table_style)
         story.append(table_encabezado)
         story.append(Spacer(0,10))
-        informacion_final = self.dar_items_guardados(id_pedido)
+        informacion_final = self.dar_items_guardados(id_pedido)["payload"]
         story.append(Paragraph("Total Unidades: "+informacion_final['unidades_total'],normal_style))
         locale.setlocale( locale.LC_ALL, '' )
         valor = locale.currency(float(informacion_final['precio_total']), grouping=True)
